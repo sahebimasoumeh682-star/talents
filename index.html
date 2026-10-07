@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ثبت استعداد دانش‌آموزان</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { box-sizing: border-box; font-family: 'Tahoma', sans-serif; }
   body {
@@ -82,6 +83,7 @@
     width: 100%;
   }
   button:hover { background: #4a3f8f; transform: translateY(-2px); }
+  button:disabled { background: #aaa; cursor: not-allowed; transform: none; }
   #message { text-align: center; margin-top: 15px; font-weight: bold; }
   @media (max-width: 600px) {
     .checkbox-group { grid-template-columns: 1fr; }
@@ -129,25 +131,34 @@
       <label>توضیح استعداد:</label>
       <textarea id="description" rows="4" placeholder="در مورد استعداد خود توضیح دهید..." required></textarea>
 
-      <button type="submit">ثبت استعداد</button>
+      <button type="submit" id="submitBtn">ثبت استعداد</button>
     </form>
 
     <p id="message"></p>
   </div>
 
 <script>
-function getData() {
-  return JSON.parse(localStorage.getItem('talents') || '[]');
-}
-function saveData(data) {
-  localStorage.setItem('talents', JSON.stringify(data));
-}
+// ==========================================
+// ۱. اطلاعات Supabase خودت رو اینجا بذار
+// ==========================================
+const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
 
+// ==========================================
+// ۲. اتصال به Supabase
+// ==========================================
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ==========================================
+// ۳. منطق فرم
+// ==========================================
 const form = document.getElementById('talentForm');
+const submitBtn = document.getElementById('submitBtn');
 
-form.addEventListener('submit', (e) => {
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  // گرفتن استعدادهای انتخاب‌شده
   const talents = Array.from(
     document.querySelectorAll('.checkbox-group input:checked')
   ).map(cb => cb.value);
@@ -157,30 +168,47 @@ form.addEventListener('submit', (e) => {
     return;
   }
 
+  // غیرفعال کردن دکمه در حین ارسال
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'در حال ارسال...';
+
+  // آماده‌سازی اطلاعات
   const entry = {
-    id: Date.now(),
     name: document.getElementById('name').value.trim(),
-    studentId: document.getElementById('studentId').value.trim(),
+    student_id: document.getElementById('studentId').value.trim(),
     grade: document.getElementById('grade').value,
-    className: document.getElementById('class').value.trim(),
+    class_name: document.getElementById('class').value.trim(),
     talents: talents,
-    description: document.getElementById('description').value.trim(),
-    date: new Date().toLocaleDateString('fa-IR')
+    description: document.getElementById('description').value.trim()
   };
 
-  const data = getData();
-  data.push(entry);
-  saveData(data);
+  // ارسال به Supabase
+  const { data, error } = await db
+    .from('talents')
+    .insert([entry]);
+
+  // فعال کردن دکمه
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'ثبت استعداد';
+
+  if (error) {
+    console.error('خطا:', error);
+    showMessage('❌ خطا در ثبت: ' + error.message, 'red');
+    return;
+  }
 
   form.reset();
   showMessage('✅ استعداد شما با موفقیت ثبت شد!', 'green');
 });
 
+// ==========================================
+// ۴. نمایش پیام
+// ==========================================
 function showMessage(text, color) {
   const msg = document.getElementById('message');
   msg.textContent = text;
   msg.style.color = color;
-  setTimeout(() => msg.textContent = '', 4000);
+  setTimeout(() => msg.textContent = '', 5000);
 }
 </script>
 </body>
