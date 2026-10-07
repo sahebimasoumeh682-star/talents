@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ثبت استعداد دانش‌آموزان</title>
+<style>
+  * { box-sizing: border-box; font-family: 'Tahoma', sans-serif; }
+  body {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .container {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  }
+  h1 { text-align: center; color: #4a3f8f; margin-top: 0; }
+  .subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+    margin-top: -10px;
+    margin-bottom: 20px;
+  }
+  label { display: block; margin-top: 15px; font-weight: bold; color: #333; font-size: 14px; }
+  input[type="text"], select, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: 0.3s;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+  }
+  .checkbox-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .checkbox-group label {
+    font-weight: normal;
+    background: #f3f4fa;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: 0.2s;
+    font-size: 13px;
+    margin-top: 0;
+  }
+  .checkbox-group label:hover { background: #e5e7f5; }
+  button {
+    margin-top: 20px;
+    padding: 12px 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: bold;
+    transition: 0.3s;
+    font-family: inherit;
+    width: 100%;
+  }
+  button:hover { background: #4a3f8f; transform: translateY(-2px); }
+  #message { text-align: center; margin-top: 15px; font-weight: bold; }
+  @media (max-width: 600px) {
+    .checkbox-group { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌟 ثبت استعداد</h1>
+    <p class="subtitle">لطفاً اطلاعات خود را با دقت وارد کنید</p>
+
+    <form id="talentForm">
+      <label>نام و نام خانوادگی:</label>
+      <input type="text" id="name" required>
+
+      <label>کد ملی / شماره دانش‌آموزی:</label>
+      <input type="text" id="studentId" required>
+
+      <label>پایه:</label>
+      <select id="grade" required>
+        <option value="">انتخاب کنید</option>
+        <option>هفتم</option>
+        <option>هشتم</option>
+        <option>نهم</option>
+        <option>دهم</option>
+        <option>یازدهم</option>
+        <option>دوازدهم</option>
+      </select>
+
+      <label>کلاس:</label>
+      <input type="text" id="class" placeholder="مثلاً ۷۰۱" required>
+
+      <label>نوع استعداد (می‌توانید چند مورد انتخاب کنید):</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" value="ورزشی"> ورزشی</label>
+        <label><input type="checkbox" value="هنری"> هنری</label>
+        <label><input type="checkbox" value="علمی"> علمی</label>
+        <label><input type="checkbox" value="موسیقی"> موسیقی</label>
+        <label><input type="checkbox" value="ادبی"> ادبی</label>
+        <label><input type="checkbox" value="فناوری"> فناوری و کامپیوتر</label>
+        <label><input type="checkbox" value="زبان"> زبان خارجی</label>
+        <label><input type="checkbox" value="سایر"> سایر</label>
+      </div>
+
+      <label>توضیح استعداد:</label>
+      <textarea id="description" rows="4" placeholder="در مورد استعداد خود توضیح دهید..." required></textarea>
+
+      <button type="submit">ثبت استعداد</button>
+    </form>
+
+    <p id="message"></p>
+  </div>
+
+<script>
+function getData() {
+  return JSON.parse(localStorage.getItem('talents') || '[]');
+}
+function saveData(data) {
+  localStorage.setItem('talents', JSON.stringify(data));
+}
+
+const form = document.getElementById('talentForm');
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  const talents = Array.from(
+    document.querySelectorAll('.checkbox-group input:checked')
+  ).map(cb => cb.value);
+
+  if (talents.length === 0) {
+    showMessage('⚠️ حداقل یک نوع استعداد را انتخاب کنید', 'orange');
+    return;
+  }
+
+  const entry = {
+    id: Date.now(),
+    name: document.getElementById('name').value.trim(),
+    studentId: document.getElementById('studentId').value.trim(),
+    grade: document.getElementById('grade').value,
+    className: document.getElementById('class').value.trim(),
+    talents: talents,
+    description: document.getElementById('description').value.trim(),
+    date: new Date().toLocaleDateString('fa-IR')
+  };
+
+  const data = getData();
+  data.push(entry);
+  saveData(data);
+
+  form.reset();
+  showMessage('✅ استعداد شما با موفقیت ثبت شد!', 'green');
+});
+
+function showMessage(text, color) {
+  const msg = document.getElementById('message');
+  msg.textContent = text;
+  msg.style.color = color;
+  setTimeout(() => msg.textContent = '', 4000);
+}
+</script>
+</body>
+</html>
